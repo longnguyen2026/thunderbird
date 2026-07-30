@@ -31,7 +31,8 @@ echo " 2. POP3"
 echo -e "\n-----------------------------------------\n"
 
 read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE
-if [ "$PROTO_CHOICE" == "2" ]; then
+
+if [ "$PROTO_CHOICE" = "2" ]; then
     SERVER_TYPE="pop3"
     IN_HOST="mail.bizflycloud.vn"
     IN_PORT="995"
@@ -53,7 +54,7 @@ while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]];
     fi
 done
 
-# 3. Tạo Profile và ghi trực tiếp nội dung cấu hình (không dùng file template ngoài)
+# 3. Tạo Profile và ghi cấu hình user.js
 echo -e "\nĐang cấu hình..."
 
 PROFILE_DIR="$HOME/.thunderbird/auto.profile"
