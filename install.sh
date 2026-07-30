@@ -24,13 +24,17 @@ else
     exit 1
 fi
 
-# 2. Thu thập thông tin từ người dùng (Buộc đọc từ /dev/tty để không bị lỗi pipe curl)
+# 2. Thu thập thông tin từ người dùng
 echo -e "\nChọn giao thức\n"
 echo " 1. IMAP (Khuyến nghị)"
 echo " 2. POP3"
 echo -e "\n-----------------------------------------\n"
 
-read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE < /dev/tty || PROTO_CHOICE="1"
+# Ép read đọc từ Terminal tương tác (/dev/tty)
+exec < /dev/tty
+
+read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE
+PROTO_CHOICE=${PROTO_CHOICE:-1}
 
 if [ "$PROTO_CHOICE" = "2" ]; then
     SERVER_TYPE="pop3"
@@ -43,12 +47,14 @@ else
 fi
 
 echo ""
+FULL_NAME=""
 while [ -z "$FULL_NAME" ]; do
-    read -p "Tên hiển thị: " FULL_NAME < /dev/tty
+    read -p "Tên hiển thị: " FULL_NAME
 done
 
+USER_EMAIL=""
 while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
-    read -p "Email: " USER_EMAIL < /dev/tty
+    read -p "Email: " USER_EMAIL
     if [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         echo -e "❌ Email không hợp lệ, vui lòng nhập lại!\n"
     fi
@@ -73,8 +79,8 @@ user_pref("mail.server.server1.hostname", "$IN_HOST");
 user_pref("mail.server.server1.userlogintypes", 0);
 user_pref("mail.server.server1.username", "$USER_EMAIL");
 user_pref("mail.server.server1.port", $IN_PORT);
-user_pref("mail.server.server1.socketType", 3); // SSL/TLS
-user_pref("mail.server.server1.authMethod", 3); // Normal password
+user_pref("mail.server.server1.socketType", 3);
+user_pref("mail.server.server1.authMethod", 3);
 
 // Identity Config
 user_pref("mail.identity.id1.useremail", "$USER_EMAIL");
@@ -87,8 +93,8 @@ user_pref("mail.smtp.defaultserver", "smtp1");
 user_pref("mail.smtpserver.smtp1.hostname", "mail.bizflycloud.vn");
 user_pref("mail.smtpserver.smtp1.port", 465);
 user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
-user_pref("mail.smtpserver.smtp1.authMethod", 3); // Normal password
-user_pref("mail.smtpserver.smtp1.try_ssl", 3); // SSL/TLS
+user_pref("mail.smtpserver.smtp1.authMethod", 3);
+user_pref("mail.smtpserver.smtp1.try_ssl", 3);
 user_pref("mail.smtpservers", "smtp1");
 EOF
 
@@ -109,5 +115,5 @@ echo -e "\n✓ Hoàn tất."
 
 # 4. Mở Thunderbird
 echo ""
-read -p "Nhấn Enter để mở Thunderbird..." < /dev/tty
+read -p "Nhấn Enter để mở Thunderbird..."
 nohup thunderbird > /dev/null 2>&1 &
