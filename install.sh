@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+# Nếu phát hiện đang chạy qua pipe curl, tự động chuyển luồng sang TTY
+if [ ! -t 0 ]; then
+    TMP_SCRIPT=$(mktemp /tmp/tb_install.XXXXXX.sh)
+    cat > "$TMP_SCRIPT"
+    exec bash "$TMP_SCRIPT" "$@" < /dev/tty
+    rm -f "$TMP_SCRIPT"
+    exit 0
+fi
+
 # Clear màn hình và in Banner
 clear
 echo "========================================================="
@@ -30,13 +39,14 @@ else
     exit 1
 fi
 
-# 2. Thu thập thông tin từ người dùng (Chỉ định trực tiếp < /dev/tty cho từng câu read)
+# 2. Thu thập thông tin từ người dùng
 echo -e "\nChọn giao thức\n"
 echo " 1. IMAP (Khuyến nghị)"
 echo " 2. POP3"
 echo -e "\n-----------------------------------------\n"
 
-read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE < /dev/tty || PROTO_CHOICE="1"
+read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE
+PROTO_CHOICE=${PROTO_CHOICE:-1}
 
 if [ "$PROTO_CHOICE" = "2" ]; then
     SERVER_TYPE="pop3"
@@ -51,12 +61,12 @@ fi
 echo ""
 FULL_NAME=""
 while [ -z "$FULL_NAME" ]; do
-    read -p "Tên hiển thị: " FULL_NAME < /dev/tty
+    read -p "Tên hiển thị: " FULL_NAME
 done
 
 USER_EMAIL=""
 while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
-    read -p "Email: " USER_EMAIL < /dev/tty
+    read -p "Email: " USER_EMAIL
     if [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         echo -e "❌ Email không hợp lệ, vui lòng nhập lại!\n"
     fi
@@ -117,6 +127,6 @@ echo -e "\n✓ Hoàn tất."
 
 # 4. Mở Thunderbird
 echo ""
-read -p "Nhấn Enter để mở Thunderbird..." < /dev/tty
+read -p "Nhấn Enter để mở Thunderbird..."
 nohup thunderbird > /dev/null 2>&1 &
 disown
