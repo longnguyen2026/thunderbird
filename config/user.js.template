@@ -1,0 +1,60 @@
+// ============================================
+// Thunderbird BizFly Configuration Template
+// ============================================
+// Các biến sẽ được thay thế:
+// {{FULL_NAME}}, {{USER_EMAIL}}, {{SERVER_TYPE}}, {{IN_HOST}}, {{IN_PORT}}
+// ============================================
+
+// --- Account Management ---
+user_pref("mail.accountmanager.accounts", "account1");
+user_pref("mail.accountmanager.defaultaccount", "account1");
+user_pref("mail.account.account1.identities", "id1");
+user_pref("mail.account.account1.server", "server1");
+
+// --- Identity ---
+user_pref("mail.identity.id1.fullName", "{{FULL_NAME}}");
+user_pref("mail.identity.id1.useremail", "{{USER_EMAIL}}");
+user_pref("mail.identity.id1.valid", true);
+user_pref("mail.identity.id1.smtpServer", "smtp1");
+
+// --- Incoming Server (IMAP/POP3) ---
+user_pref("mail.server.server1.authMethod", 3);
+user_pref("mail.server.server1.hostname", "{{IN_HOST}}");
+user_pref("mail.server.server1.name", "{{USER_EMAIL}}");
+user_pref("mail.server.server1.port", {{IN_PORT}});
+user_pref("mail.server.server1.socketType", 3);
+user_pref("mail.server.server1.type", "{{SERVER_TYPE}}");
+user_pref("mail.server.server1.userName", "{{USER_EMAIL}}");
+user_pref("mail.server.server1.login_at_startup", true);
+user_pref("mail.server.server1.check_new_mail", true);
+
+// --- Outgoing Server (SMTP) ---
+user_pref("mail.smtpservers", "smtp1");
+user_pref("mail.smtp.defaultserver", "smtp1");
+user_pref("mail.smtpserver.smtp1.authMethod", 3);
+user_pref("mail.smtpserver.smtp1.hostname", "mail.bizflycloud.vn");
+user_pref("mail.smtpserver.smtp1.port", 465);
+user_pref("mail.smtpserver.smtp1.try_ssl", 3);
+user_pref("mail.smtpserver.smtp1.username", "{{USER_EMAIL}}");
+
+// --- Security & Privacy ---
+user_pref("privacy.trackingprotection.enabled", true);
+user_pref("privacy.trackingprotection.emailtracking.enabled", true);
+user_pref("mail.server.server1.secure_connection", 1);
+
+// --- UI Preferences ---
+user_pref("mail.startup.enabledMailCheckOnce", true);
+user_pref("mail.openMessageBehavior.version", 1);
+user_pref("mail.identity.id1.archive_enabled", true);
+user_pref("mail.identity.id1.drafts_folder_picker_mode", 0);
+user_pref("mail.identity.id1.sent_folder_picker_mode", 0);
+user_pref("mail.identity.id1.template_folder_picker_mode", 0);
+
+// --- Performance Optimizations ---
+user_pref("mail.imap.use_literal_plus", true);
+user_pref("mail.imap.use_status_for_biff", true);
+user_pref("mail.server.server1.max_cached_connections", 5);
+
+// --- Auto-Configuration ---
+user_pref("mail.identity.id1.draft_autosave", true);
+user_pref("mail.identity.id1.draft_autosave_interval", 30);
