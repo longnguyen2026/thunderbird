@@ -186,7 +186,7 @@ user_pref("mail.server.server1.check_new_mail", true);
 user_pref("mail.smtpservers", "smtp1");
 user_pref("mail.smtp.defaultserver", "smtp1");
 user_pref("mail.smtpserver.smtp1.hostname", "mail.bizflycloud.vn");
-user_pref("mail.smtpserver.smtp1.port", 465);
+user_pref("mail.smtpserver.smtp1.port", 587);
 user_pref("mail.smtpserver.smtp1.try_ssl", 3);
 user_pref("mail.smtpserver.smtp1.authMethod", 3);
 user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
@@ -292,7 +292,7 @@ echo -e "${BLUE}=========================================================${NC}"
 echo -e "\n  📋 Thông tin cấu hình:"
 echo -e "    • Giao thức: ${SERVER_TYPE^^}"
 echo -e "    • Server đến: $IN_HOST:$IN_PORT"
-echo -e "    • Server đi: mail.bizflycloud.vn:465"
+echo -e "    • Server đi: mail.bizflycloud.vn:587"
 echo -e "    • Email: $USER_EMAIL"
 echo -e "    • Profile: $PROFILE_NAME"
 
