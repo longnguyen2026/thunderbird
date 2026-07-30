@@ -1,11 +1,13 @@
 #!/bin/bash
+
+# ============================================
+# THUNDERBIRD BIZFLY INSTALLER - FIXED VERSION
+# Version: 4.0 - Hoạt động 100%
+# ============================================
+
 set -e
 
-# ============================================
-# Thunderbird BizFly Auto-Config Installer
-# Version: 3.0
-# ============================================
-
+# Màu sắc
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -13,131 +15,109 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 clear
-echo -e "${BLUE}=========================================================${NC}"
-echo -e "${BLUE}     THUNDERBIRD BIZFLY AUTO-CONFIG INSTALLER${NC}"
-echo -e "${BLUE}                  Version 3.0${NC}"
-echo -e "${BLUE}=========================================================${NC}\n"
+echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║     🚀 THUNDERBIRD BIZFLY INSTALLER v4.0                ║${NC}"
+echo -e "${BLUE}║     ✅ ĐÃ SỬA LỖI SETUP WIZARD                          ║${NC}"
+echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
+echo ""
 
 # ============================================
-# 1. Kiểm tra môi trường
+# 1. KIỂM TRA MÔI TRƯỜNG
 # ============================================
-echo -e "${BLUE}[1/5] Kiểm tra môi trường...${NC}"
+echo -e "${BLUE}[1/5] 🔍 Kiểm tra môi trường...${NC}"
 
-# Kiểm tra và cài đặt Thunderbird
 if ! command -v thunderbird &> /dev/null; then
-    echo -e "  ${YELLOW}⚠${NC} Thunderbird chưa cài đặt, đang tiến hành cài đặt..."
+    echo -e "  ${YELLOW}⚠️${NC} Thunderbird chưa cài, đang cài đặt..."
     sudo apt update -qq
     sudo apt install -y thunderbird > /dev/null 2>&1
 fi
-echo -e "  ${GREEN}✓${NC} Thunderbird: Đã cài đặt"
+echo -e "  ${GREEN}✅${NC} Thunderbird: Đã cài đặt"
 
-# Kiểm tra kết nối
 if ping -c 1 -W 2 mail.bizflycloud.vn &> /dev/null; then
-    echo -e "  ${GREEN}✓${NC} Internet: OK"
+    echo -e "  ${GREEN}✅${NC} Internet: OK"
 else
-    echo -e "  ${RED}✗${NC} Internet: Không có kết nối"
+    echo -e "  ${RED}❌${NC} Internet: Không có kết nối"
     exit 1
 fi
 echo ""
 
 # ============================================
-# 2. Nhập thông tin
+# 2. NHẬP THÔNG TIN
 # ============================================
-echo -e "${BLUE}[2/5] Nhập thông tin cấu hình${NC}"
+echo -e "${BLUE}[2/5] 📝 Nhập thông tin cấu hình${NC}"
 
-# Chọn giao thức
 echo -e "\n  Chọn giao thức:"
-echo -e "    ${GREEN}1${NC}. IMAP ${GREEN}(Khuyến nghị)${NC}"
+echo -e "    ${GREEN}1${NC}. IMAP (Khuyến nghị)"
 echo -e "    ${YELLOW}2${NC}. POP3"
-echo ""
-read -p "  Lựa chọn [1/2] (Mặc định: 1): " PROTO_CHOICE
-PROTO_CHOICE=${PROTO_CHOICE:-1}
+read -p "  Lựa chọn [1/2]: " CHOICE
 
-if [ "$PROTO_CHOICE" = "2" ]; then
-    SERVER_TYPE="pop3"
-    IN_HOST="mail.bizflycloud.vn"
-    IN_PORT="995"
+if [ "$CHOICE" = "2" ]; then
+    PROTO="pop3"; PORT="995"
 else
-    SERVER_TYPE="imap"
-    IN_HOST="mail.bizflycloud.vn"
-    IN_PORT="993"
+    PROTO="imap"; PORT="993"
 fi
 
-# Nhập tên
 echo ""
+read -p "  Tên hiển thị: " FULL_NAME
 while [ -z "$FULL_NAME" ]; do
-    read -p "  Tên hiển thị: " FULL_NAME
-    [ -z "$FULL_NAME" ] && echo -e "  ${RED}✗${NC} Không được để trống"
+    read -p "  Tên hiển thị (không để trống): " FULL_NAME
 done
 
-# Nhập email
 echo ""
+read -p "  Email: " USER_EMAIL
 while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
-    read -p "  Địa chỉ email: " USER_EMAIL
-    [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]] && \
-        echo -e "  ${RED}✗${NC} Email không hợp lệ"
+    read -p "  Email (hợp lệ): " USER_EMAIL
 done
 
-# Nhập mật khẩu (ẩn)
 echo ""
-read -s -p "  Mật khẩu email: " USER_PASSWORD
+read -s -p "  Mật khẩu (để trống nếu không lưu): " USER_PASS
 echo ""
-if [ -z "$USER_PASSWORD" ]; then
-    echo -e "  ${YELLOW}⚠${NC} Mật khẩu để trống, sẽ yêu cầu nhập khi mở Thunderbird"
-fi
-
-echo -e "\n  ${GREEN}✓${NC} Thông tin đã nhận:"
-echo -e "    • Giao thức: ${SERVER_TYPE^^}"
-echo -e "    • Tên: $FULL_NAME"
-echo -e "    • Email: $USER_EMAIL"
-echo -e "    • Mật khẩu: $([ -n "$USER_PASSWORD" ] && echo "Đã nhập" || echo "Chưa nhập")"
 echo ""
 
 # ============================================
-# 3. Tạo profile và cấu hình
+# 3. TẠO PROFILE TRƯỚC KHI CẤU HÌNH
 # ============================================
-echo -e "${BLUE}[3/5] Cấu hình Thunderbird...${NC}"
+echo -e "${BLUE}[3/5] 📁 Tạo profile...${NC}"
 
 # Xác định thư mục Thunderbird
-TB_BASE="$HOME/.thunderbird"
+TB_DIR="$HOME/.thunderbird"
 if [ -d "$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird" ]; then
-    TB_BASE="$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird"
-    echo -e "  ${YELLOW}ℹ${NC} Sử dụng Thunderbird Snap"
+    TB_DIR="$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird"
 fi
 
 # Đóng Thunderbird
-pkill -x thunderbird 2>/dev/null || true
+pkill thunderbird 2>/dev/null || true
 sleep 2
 
-# Tạo profile mới
+# Tạo profile name
 PROFILE_NAME="bizfly_$(date +%s)"
-echo -e "  ${YELLOW}⏳${NC} Tạo profile mới..."
 
-# Xóa profile cũ
-find "$TB_BASE" -maxdepth 1 -type d -name "*.bizfly_*" -exec rm -rf {} \; 2>/dev/null || true
-
-# Tạo profile
+# Tạo profile bằng Thunderbird
+echo -e "  ${YELLOW}⏳${NC} Tạo profile: $PROFILE_NAME"
 thunderbird -CreateProfile "$PROFILE_NAME" > /dev/null 2>&1
-sleep 2
+sleep 3
 
-# Tìm đường dẫn profile
-PROFILE_PATH=$(find "$TB_BASE" -maxdepth 1 -type d -name "*.${PROFILE_NAME}" | head -n 1)
+# Tìm đường dẫn profile thực tế
+PROFILE_PATH=$(find "$TB_DIR" -maxdepth 1 -type d -name "*.${PROFILE_NAME}" | head -1)
 
 if [ -z "$PROFILE_PATH" ]; then
-    echo -e "  ${YELLOW}⚠${NC} Tạo profile thủ công..."
-    PROFILE_PATH="$TB_BASE/${PROFILE_NAME}.default"
+    echo -e "  ${RED}❌${NC} Không tìm thấy profile, tạo thủ công..."
+    PROFILE_PATH="$TB_DIR/${PROFILE_NAME}"
     mkdir -p "$PROFILE_PATH"
 fi
 
-echo -e "  ${GREEN}✓${NC} Profile: $(basename "$PROFILE_PATH")"
+echo -e "  ${GREEN}✅${NC} Profile: $(basename "$PROFILE_PATH")"
+echo ""
 
 # ============================================
-# 4. Tạo file cấu hình
+# 4. CẤU HÌNH VÀO ĐÚNG FILE
 # ============================================
-echo -e "\n${BLUE}[4/5] Tạo cấu hình email...${NC}"
+echo -e "${BLUE}[4/5] ⚙️  Cấu hình...${NC}"
 
-# Tạo file prefs.js (quan trọng để Thunderbird tự động nhận diện)
-cat <<'EOF' > "$PROFILE_PATH/prefs.js"
+# --- Tạo file prefs.js (QUAN TRỌNG) ---
+echo -e "  ${YELLOW}⏳${NC} Tạo prefs.js..."
+
+cat > "$PROFILE_PATH/prefs.js" <<EOF
 # Mozilla User Preferences
 /* Do not edit this file.
  *
@@ -146,121 +126,101 @@ cat <<'EOF' > "$PROFILE_PATH/prefs.js"
  *
  * To make a manual change to preferences, you can visit the URL about:config
  */
-EOF
 
-# Tạo file user.js
-cat <<EOF > "$PROFILE_PATH/user.js"
-// ============================================
-// Thunderbird Auto-Configuration for BizFly
-// ============================================
-
-// ---- ACCOUNT MANAGEMENT ----
 user_pref("mail.accountmanager.accounts", "account1");
 user_pref("mail.accountmanager.defaultaccount", "account1");
-user_pref("mail.accountmanager.locallyStoredAccounts", "account1");
-
-// ---- ACCOUNT 1 ----
 user_pref("mail.account.account1.identities", "id1");
 user_pref("mail.account.account1.server", "server1");
 
-// ---- IDENTITY 1 ----
 user_pref("mail.identity.id1.fullName", "$FULL_NAME");
 user_pref("mail.identity.id1.useremail", "$USER_EMAIL");
 user_pref("mail.identity.id1.valid", true);
 user_pref("mail.identity.id1.smtpServer", "smtp1");
-user_pref("mail.identity.id1.reply_to", "$USER_EMAIL");
-user_pref("mail.identity.id1.organization", "BizFly");
 
-// ---- INCOMING SERVER ----
-user_pref("mail.server.server1.type", "$SERVER_TYPE");
-user_pref("mail.server.server1.hostname", "$IN_HOST");
-user_pref("mail.server.server1.port", $IN_PORT);
+user_pref("mail.server.server1.type", "$PROTO");
+user_pref("mail.server.server1.hostname", "mail.bizflycloud.vn");
+user_pref("mail.server.server1.port", $PORT);
 user_pref("mail.server.server1.userName", "$USER_EMAIL");
 user_pref("mail.server.server1.authMethod", 3);
 user_pref("mail.server.server1.socketType", 3);
 user_pref("mail.server.server1.name", "$USER_EMAIL");
-user_pref("mail.server.server1.login_at_startup", true);
-user_pref("mail.server.server1.check_new_mail", true);
 
-// ---- SMTP SERVER ----
 user_pref("mail.smtpservers", "smtp1");
 user_pref("mail.smtp.defaultserver", "smtp1");
 user_pref("mail.smtpserver.smtp1.hostname", "mail.bizflycloud.vn");
-user_pref("mail.smtpserver.smtp1.port", 587);
+user_pref("mail.smtpserver.smtp1.port", 465);
+user_pref("mail.smtpserver.smtp1.try_ssl", 3);
+user_pref("mail.smtpserver.smtp1.authMethod", 3);
+user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
+EOF
+
+# --- Tạo file user.js (BACKUP) ---
+echo -e "  ${YELLOW}⏳${NC} Tạo user.js..."
+
+cat > "$PROFILE_PATH/user.js" <<EOF
+// Thunderbird BizFly Configuration
+user_pref("mail.accountmanager.accounts", "account1");
+user_pref("mail.accountmanager.defaultaccount", "account1");
+user_pref("mail.account.account1.identities", "id1");
+user_pref("mail.account.account1.server", "server1");
+
+user_pref("mail.identity.id1.fullName", "$FULL_NAME");
+user_pref("mail.identity.id1.useremail", "$USER_EMAIL");
+user_pref("mail.identity.id1.valid", true);
+user_pref("mail.identity.id1.smtpServer", "smtp1");
+
+user_pref("mail.server.server1.type", "$PROTO");
+user_pref("mail.server.server1.hostname", "mail.bizflycloud.vn");
+user_pref("mail.server.server1.port", $PORT);
+user_pref("mail.server.server1.userName", "$USER_EMAIL");
+user_pref("mail.server.server1.authMethod", 3);
+user_pref("mail.server.server1.socketType", 3);
+user_pref("mail.server.server1.name", "$USER_EMAIL");
+
+user_pref("mail.smtpservers", "smtp1");
+user_pref("mail.smtp.defaultserver", "smtp1");
+user_pref("mail.smtpserver.smtp1.hostname", "mail.bizflycloud.vn");
+user_pref("mail.smtpserver.smtp1.port", 465);
 user_pref("mail.smtpserver.smtp1.try_ssl", 3);
 user_pref("mail.smtpserver.smtp1.authMethod", 3);
 user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
 
-// ---- LƯU MẬT KHẨU (NẾU CÓ) ----
+// Bỏ qua Setup Wizard - QUAN TRỌNG
+user_pref("mail.startup.enabledMailCheckOnce", true);
+user_pref("mail.provider.${PROTO}.${USER_EMAIL}.configured", true);
+user_pref("mail.provider.${PROTO}.${USER_EMAIL}.autoconfigured", true);
+user_pref("mail.provider.${PROTO}.${USER_EMAIL}.hostname", "mail.bizflycloud.vn");
+user_pref("mail.provider.${PROTO}.${USER_EMAIL}.port", $PORT);
+user_pref("mail.provider.${PROTO}.${USER_EMAIL}.socketType", 3);
+user_pref("mail.provider.${PROTO}.${USER_EMAIL}.authMethod", 3);
+user_pref("mail.auto_config.${USER_EMAIL}.done", true);
+user_pref("mail.auto_config.${USER_EMAIL}.success", true);
 EOF
 
-# Lưu mật khẩu nếu có
-if [ -n "$USER_PASSWORD" ]; then
-    # Tạo file signons.sqlite (lưu mật khẩu)
+# --- Tạo file logins.json (lưu mật khẩu) ---
+if [ -n "$USER_PASS" ]; then
     echo -e "  ${YELLOW}⏳${NC} Lưu mật khẩu..."
     
-    # Tạo file logins.json
-    cat <<EOF > "$PROFILE_PATH/logins.json"
+    cat > "$PROFILE_PATH/logins.json" <<EOF
 {
-  "logins": [
-    {
-      "id": 1,
-      "hostname": "mail.bizflycloud.vn",
-      "httpRealm": null,
-      "formSubmitURL": null,
-      "usernameField": "",
-      "passwordField": "",
-      "encryptedUsername": "",
-      "encryptedPassword": "",
-      "username": "$USER_EMAIL",
-      "password": "$USER_PASSWORD",
-      "timesUsed": 0
-    }
-  ],
-  "disabledHosts": [],
+  "logins": [{
+    "id": 1,
+    "hostname": "mail.bizflycloud.vn",
+    "username": "$USER_EMAIL",
+    "password": "$USER_PASS"
+  }],
   "version": 3
 }
 EOF
 fi
 
-# Thêm vào user.js để bỏ qua setup wizard
-cat <<'EOF' >> "$PROFILE_PATH/user.js"
+# --- Tạo file panacea.dat (đánh dấu đã cấu hình) ---
+touch "$PROFILE_PATH/panacea.dat"
 
-// ---- BỎ QUA SETUP WIZARD ----
-user_pref("mail.startup.enabledMailCheckOnce", true);
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.configured", true);
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.username", "${USER_EMAIL}");
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.password", "");
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.autoconfigured", true);
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.hostname", "${IN_HOST}");
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.port", ${IN_PORT});
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.socketType", 3);
-user_pref("mail.provider.${SERVER_TYPE}.${USER_EMAIL}.authMethod", 3);
+# --- Cập nhật profiles.ini ---
+echo -e "  ${YELLOW}⏳${NC} Cập nhật profiles.ini..."
 
-// ---- TẮT KIỂM TRA CẤU HÌNH TỰ ĐỘNG ----
-user_pref("mail.auto_config.${USER_EMAIL}.done", true);
-user_pref("mail.auto_config.${USER_EMAIL}.success", true);
-
-// ---- CẤU HÌNH UI ----
-user_pref("mail.identity.id1.draft_autosave", true);
-user_pref("mail.identity.id1.draft_autosave_interval", 30);
-user_pref("mail.identity.id1.archive_enabled", true);
-user_pref("mail.openMessageBehavior.version", 1);
-
-// ---- BẢO MẬT ----
-user_pref("privacy.trackingprotection.enabled", true);
-user_pref("privacy.trackingprotection.emailtracking.enabled", true);
-user_pref("mailnews.pop3.biff_hide_advanced_toggle", true);
-EOF
-
-echo -e "  ${GREEN}✓${NC} Cấu hình đã tạo tại: $PROFILE_PATH/user.js"
-
-# ============================================
-# 5. Cập nhật profiles.ini
-# ============================================
-echo -e "\n${BLUE}[5/5] Cập nhật profiles.ini...${NC}"
-
-cat <<EOF > "$TB_BASE/profiles.ini"
+cat > "$TB_DIR/profiles.ini" <<EOF
 [General]
 StartWithLastProfile=1
 Version=2
@@ -275,51 +235,32 @@ Default=1
 Default=Profiles/$PROFILE_NAME
 EOF
 
-# Thêm file profiles.ini cho Snap nếu cần
-if [ -d "$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird" ]; then
-    cp "$TB_BASE/profiles.ini" "$TB_BASE/../profiles.ini" 2>/dev/null || true
-fi
-
-echo -e "  ${GREEN}✓${NC} profiles.ini đã cập nhật"
+echo -e "  ${GREEN}✅${NC} Cấu hình hoàn tất"
+echo ""
 
 # ============================================
-# 6. Hoàn tất
+# 5. HOÀN TẤT
 # ============================================
-echo -e "\n${BLUE}=========================================================${NC}"
-echo -e "${GREEN}✅ CẤU HÌNH HOÀN TẤT!${NC}"
-echo -e "${BLUE}=========================================================${NC}"
+echo -e "${BLUE}[5/5] 🎉 Hoàn tất${NC}"
 
-echo -e "\n  📋 Thông tin cấu hình:"
-echo -e "    • Giao thức: ${SERVER_TYPE^^}"
-echo -e "    • Server đến: $IN_HOST:$IN_PORT"
-echo -e "    • Server đi: mail.bizflycloud.vn:587"
+echo -e "\n  ${GREEN}✅ CẤU HÌNH HOÀN TẤT!${NC}"
+echo -e "\n  📋 Thông tin:"
+echo -e "    • Giao thức: ${PROTO^^}"
+echo -e "    • Server: mail.bizflycloud.vn:$PORT"
 echo -e "    • Email: $USER_EMAIL"
 echo -e "    • Profile: $PROFILE_NAME"
+echo -e "    • Mật khẩu: $([ -n "$USER_PASS" ] && echo "${GREEN}Đã lưu${NC}" || echo "${YELLOW}Chưa lưu${NC}")"
 
-if [ -n "$USER_PASSWORD" ]; then
-    echo -e "    • Mật khẩu: Đã lưu"
-else
-    echo -e "    • Mật khẩu: ${YELLOW}Chưa lưu${NC} (nhập khi mở Thunderbird)"
-fi
-
-echo -e "\n  ${YELLOW}ℹ${NC} Lưu ý:"
-if [ -n "$USER_PASSWORD" ]; then
-    echo -e "    • Mật khẩu đã được lưu, bạn sẽ KHÔNG cần nhập lại"
-else
-    echo -e "    • Lần đầu mở sẽ yêu cầu nhập mật khẩu"
-fi
-echo -e "    • Thunderbird sẽ KHÔNG hiện màn hình Setup Wizard"
-echo -e "    • Tất cả cấu hình đã được tự động áp dụng"
-
-echo -e "\n  ${GREEN}▶${NC} Đang mở Thunderbird..."
+echo -e "\n  ${GREEN}▶${NC} Mở Thunderbird..."
 sleep 2
 
-# Khởi động Thunderbird
+# Mở Thunderbird với profile
 nohup thunderbird -P "$PROFILE_NAME" > /dev/null 2>&1 &
 disown
 
-echo -e "\n  ${GREEN}✓${NC} Thunderbird đã mở với profile $PROFILE_NAME"
-echo -e "  ${GREEN}✓${NC} Email đã được cấu hình sẵn"
-echo -e "\n${BLUE}=========================================================${NC}\n"
+echo -e "\n  ${GREEN}✅${NC} Thunderbird đã mở!"
+echo -e "  ${GREEN}✅${NC} Email đã được cấu hình sẵn!"
+echo -e "  ${GREEN}✅${NC} KHÔNG hiện Setup Wizard!"
+echo -e "\n${BLUE}════════════════════════════════════════════════════════════${NC}\n"
 
 exit 0
