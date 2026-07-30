@@ -8,7 +8,13 @@ echo "          THUNDERBIRD BIZFLY INSTALLER"
 echo "                  Version 1.0"
 echo "========================================================="
 
-# 1. Kiểm tra Thunderbird & Internet
+# 1. Kiểm tra & Tắt Thunderbird nếu đang chạy
+if pgrep -x "thunderbird" > /dev/null; then
+    echo "⚠️ Đang đóng Thunderbird để áp dụng cấu hình..."
+    pkill -x thunderbird || true
+    sleep 1
+fi
+
 if command -v thunderbird &> /dev/null; then
     echo -e "✓ Thunderbird: Installed"
 else
@@ -117,3 +123,4 @@ echo -e "\n✓ Hoàn tất."
 echo ""
 read -p "Nhấn Enter để mở Thunderbird..."
 nohup thunderbird > /dev/null 2>&1 &
+disown
