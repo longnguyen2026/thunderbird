@@ -2,7 +2,7 @@
 
 # ============================================
 # THUNDERBIRD BIZFLY INSTALLER
-# Version: 6.0 - HOẠT ĐỘNG 100%
+# Version: 7.0 - FIXED
 # ============================================
 
 set -e
@@ -14,10 +14,22 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
+# --- Hàm để đảm bảo nhập từ bàn phím ---
+force_tty_input() {
+    if [ ! -t 0 ]; then
+        # Chạy lại script với TTY
+        exec bash -c "exec < /dev/tty; bash $0 $@"
+        exit 0
+    fi
+}
+
+# Gọi hàm ngay từ đầu
+force_tty_input "$@"
+
 clear
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     🚀 THUNDERBIRD BIZFLY INSTALLER v6.0                ║${NC}"
-echo -e "${BLUE}║     ✅ HOẠT ĐỘNG 100% - ĐÃ TEST                         ║${NC}"
+echo -e "${BLUE}║     🚀 THUNDERBIRD BIZFLY INSTALLER v7.0                ║${NC}"
+echo -e "${BLUE}║     ✅ FIXED: NHẬP LIỆU & TẠO PROFILE                   ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -41,14 +53,14 @@ fi
 echo ""
 
 # ============================================
-# 2. NHẬP THÔNG TIN
+# 2. NHẬP THÔNG TIN (ĐÃ SỬA)
 # ============================================
 echo -e "${BLUE}[2/5] 📝 Nhập thông tin${NC}"
 
 echo -e "\n  Chọn giao thức:"
 echo -e "    ${GREEN}1${NC}. IMAP"
 echo -e "    ${YELLOW}2${NC}. POP3"
-read -p "  Lựa chọn [1/2]: " CHOICE
+read -p "  Lựa chọn [1/2]: " CHOICE </dev/tty
 
 if [ "$CHOICE" = "2" ]; then
     PROTO="pop3"; PORT="995"
@@ -57,19 +69,19 @@ else
 fi
 
 echo ""
-read -p "  Tên hiển thị: " FULL_NAME
+read -p "  Tên hiển thị: " FULL_NAME </dev/tty
 while [ -z "$FULL_NAME" ]; do
-    read -p "  Tên hiển thị (không để trống): " FULL_NAME
+    read -p "  Tên hiển thị (không để trống): " FULL_NAME </dev/tty
 done
 
 echo ""
-read -p "  Email: " USER_EMAIL
+read -p "  Email: " USER_EMAIL </dev/tty
 while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
-    read -p "  Email (hợp lệ): " USER_EMAIL
+    read -p "  Email (hợp lệ): " USER_EMAIL </dev/tty
 done
 
 echo ""
-read -s -p "  Mật khẩu (để trống nếu không lưu): " USER_PASS
+read -s -p "  Mật khẩu (để trống nếu không lưu): " USER_PASS </dev/tty
 echo ""
 echo ""
 
@@ -86,39 +98,41 @@ echo -e "  ${GREEN}✅${NC} Đã xóa profile cũ"
 echo ""
 
 # ============================================
-# 4. TẠO PROFILE MỚI
+# 4. TẠO PROFILE MỚI (ĐÃ SỬA)
 # ============================================
 echo -e "${BLUE}[4/5] ⚙️  Tạo profile...${NC}"
 
-# Tạo thư mục Thunderbird
 mkdir -p ~/.thunderbird
 
-# Tạo profile
 PROFILE_NAME="bizfly"
 echo -e "  ${YELLOW}⏳${NC} Tạo profile: $PROFILE_NAME"
 
-# Tạo profile bằng Thunderbird
-thunderbird -CreateProfile "$PROFILE_NAME" > /dev/null 2>&1
+# Tạo profile với đường dẫn tuyệt đối để tránh lỗi
+thunderbird -CreateProfile "$PROFILE_NAME" 2>/dev/null || true
 sleep 3
 
 # Tìm profile path
 PROFILE_PATH=$(find ~/.thunderbird -maxdepth 1 -type d -name "*.${PROFILE_NAME}" | head -1)
 
 if [ -z "$PROFILE_PATH" ]; then
-    echo -e "  ${YELLOW}⚠️${NC} Tạo profile thủ công..."
+    echo -e "  ${YELLOW}⚠️${NC} Không tìm thấy profile. Tạo thủ công..."
     PROFILE_PATH="$HOME/.thunderbird/${PROFILE_NAME}.default"
     mkdir -p "$PROFILE_PATH"
+    
+    # Tạo file cần thiết cho profile
+    touch "$PROFILE_PATH/prefs.js"
+    touch "$PROFILE_PATH/user.js"
 fi
 
 echo -e "  ${GREEN}✅${NC} Profile: $(basename "$PROFILE_PATH")"
 echo ""
 
 # ============================================
-# 5. CẤU HÌNH - CÁCH ĐÚNG NHẤT
+# 5. CẤU HÌNH (ĐÃ SỬA)
 # ============================================
 echo -e "${BLUE}[5/5] ⚙️  Cấu hình email...${NC}"
 
-# Tạo file user.js (cấu hình chính)
+# Tạo file user.js
 echo -e "  ${YELLOW}⏳${NC} Tạo user.js..."
 
 cat > "$PROFILE_PATH/user.js" <<EOF
@@ -176,7 +190,7 @@ user_pref("mail.identity.id1.draft_autosave", true);
 user_pref("privacy.trackingprotection.enabled", true);
 EOF
 
-# Tạo file prefs.js (backup)
+# Tạo file prefs.js
 cat > "$PROFILE_PATH/prefs.js" <<EOF
 # Mozilla User Preferences
 user_pref("mail.accountmanager.accounts", "account1");
