@@ -24,13 +24,13 @@ else
     exit 1
 fi
 
-# 2. Thu thập thông tin từ người dùng
+# 2. Thu thập thông tin từ người dùng (Ép đọc từ /dev/tty để không bị trôi khi curl | bash)
 echo -e "\nChọn giao thức\n"
 echo " 1. IMAP (Khuyến nghị)"
 echo " 2. POP3"
 echo -e "\n-----------------------------------------\n"
 
-read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE
+read -p "Chọn [1/2] (Mặc định 1): " PROTO_CHOICE < /dev/tty || PROTO_CHOICE="1"
 
 if [ "$PROTO_CHOICE" = "2" ]; then
     SERVER_TYPE="pop3"
@@ -44,11 +44,11 @@ fi
 
 echo ""
 while [ -z "$FULL_NAME" ]; do
-    read -p "Tên hiển thị: " FULL_NAME
+    read -p "Tên hiển thị: " FULL_NAME < /dev/tty
 done
 
 while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; do
-    read -p "Email: " USER_EMAIL
+    read -p "Email: " USER_EMAIL < /dev/tty
     if [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         echo -e "❌ Email không hợp lệ, vui lòng nhập lại!\n"
     fi
@@ -109,5 +109,5 @@ echo -e "\n✓ Hoàn tất."
 
 # 4. Mở Thunderbird
 echo ""
-read -p "Nhấn Enter để mở Thunderbird..."
+read -p "Nhấn Enter để mở Thunderbird..." < /dev/tty
 nohup thunderbird > /dev/null 2>&1 &
