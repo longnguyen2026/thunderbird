@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Tự động bắt TTY nếu chạy curl | bash
+# Tự động bắt TTY nếu chạy qua pipe curl | bash
 if [ ! -t 0 ]; then
     TMP_SCRIPT=$(mktemp /tmp/tb_install.XXXXXX.sh)
     cat > "$TMP_SCRIPT"
@@ -20,7 +20,7 @@ echo "========================================================="
 pkill -x thunderbird || true
 sleep 1
 
-# Check Thunderbird
+# Check & Cài đặt Thunderbird
 if ! command -v thunderbird &> /dev/null; then
     echo -e "⚠️ Thunderbird: Not installed (Đang cài đặt...)"
     sudo apt update -qq && sudo apt install -y thunderbird > /dev/null 2>&1
@@ -35,7 +35,7 @@ else
     exit 1
 fi
 
-# 2. Nhập thông tin
+# 2. Thu thập thông tin từ người dùng
 echo -e "\nChọn giao thức\n"
 echo " 1. IMAP (Khuyến nghị)"
 echo " 2. POP3"
@@ -70,17 +70,29 @@ done
 
 echo -e "\nĐang cấu hình..."
 
-# 3. Xác định đúng thư mục root của Thunderbird
+# 3. Xác định đúng thư mục gốc của Thunderbird
 TB_BASE="$HOME/.thunderbird"
 if [ -d "$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird" ]; then
     TB_BASE="$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird"
 fi
 
-PROFILE_DIR="$TB_BASE/auto.profile"
-mkdir -p "$PROFILE_DIR"
+mkdir -p "$TB_BASE"
 
-# 4. Ghi file user.js chuẩn
-cat <<EOF > "$PROFILE_DIR/user.js"
+# Khởi tạo profile mặc định chuẩn nếu chưa có
+if [ ! -f "$TB_BASE/profiles.ini" ]; then
+    thunderbird -CreateProfile "default $TB_BASE/default" > /dev/null 2>&1 || true
+fi
+
+# Tìm thư mục Profile đang active (tìm folder chứa prefs.js hoặc folder *.default*)
+TARGET_PROFILE=$(find "$TB_BASE" -maxdepth 2 -type d \( -name "*.default*" -o -name "default" \) | head -n 1)
+
+if [ -z "$TARGET_PROFILE" ]; then
+    TARGET_PROFILE="$TB_BASE/default"
+    mkdir -p "$TARGET_PROFILE"
+fi
+
+# 4. Ghi file user.js trực tiếp vào Profile active
+cat <<EOF > "$TARGET_PROFILE/user.js"
 user_pref("mail.account.account1.identities", "id1");
 user_pref("mail.account.account1.server", "server1");
 user_pref("mail.accountmanager.accounts", "account1");
@@ -105,26 +117,10 @@ user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
 user_pref("mail.smtpservers", "smtp1");
 EOF
 
-# 5. Ghi file profiles.ini
-cat <<EOF > "$TB_BASE/profiles.ini"
-[Profile0]
-Name=default
-IsRelative=1
-Path=auto.profile
-Default=1
-
-[General]
-StartWithLastProfile=1
-Version=2
-EOF
-
-# Xóa bớt cache profile cũ nếu có
-rm -rf "$TB_BASE/installs.ini"
-
 sleep 1
 echo -e "\n✓ Hoàn tất."
 
-# 6. Khởi động Thunderbird
+# 5. Khởi động Thunderbird
 echo ""
 read -p "Nhấn Enter để mở Thunderbird..."
 nohup thunderbird > /dev/null 2>&1 &
