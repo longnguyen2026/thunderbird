@@ -24,7 +24,7 @@ else
     exit 1
 fi
 
-# 2. Thu thập thông tin từ người dùng (Ép đọc từ /dev/tty để không bị trôi khi curl | bash)
+# 2. Thu thập thông tin từ người dùng (Buộc đọc từ /dev/tty để không bị lỗi pipe curl)
 echo -e "\nChọn giao thức\n"
 echo " 1. IMAP (Khuyến nghị)"
 echo " 2. POP3"
