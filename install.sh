@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Nếu phát hiện đang chạy qua pipe curl, tự động chuyển luồng sang TTY
+# Tự động bắt TTY nếu chạy curl | bash
 if [ ! -t 0 ]; then
     TMP_SCRIPT=$(mktemp /tmp/tb_install.XXXXXX.sh)
     cat > "$TMP_SCRIPT"
@@ -10,28 +10,24 @@ if [ ! -t 0 ]; then
     exit 0
 fi
 
-# Clear màn hình và in Banner
 clear
 echo "========================================================="
 echo "          THUNDERBIRD BIZFLY INSTALLER"
 echo "                  Version 1.0"
 echo "========================================================="
 
-# 1. Kiểm tra & Tắt Thunderbird nếu đang chạy
-if pgrep -x "thunderbird" > /dev/null; then
-    echo "⚠️ Đang đóng Thunderbird để áp dụng cấu hình..."
-    pkill -x thunderbird || true
-    sleep 1
-fi
+# 1. Tắt Thunderbird nếu đang chạy
+pkill -x thunderbird || true
+sleep 1
 
-if command -v thunderbird &> /dev/null; then
-    echo -e "✓ Thunderbird: Installed"
-else
+# Check Thunderbird
+if ! command -v thunderbird &> /dev/null; then
     echo -e "⚠️ Thunderbird: Not installed (Đang cài đặt...)"
     sudo apt update -qq && sudo apt install -y thunderbird > /dev/null 2>&1
-    echo -e "✓ Thunderbird: Installed"
 fi
+echo -e "✓ Thunderbird: Installed"
 
+# Check Internet
 if ping -c 1 mail.bizflycloud.vn &> /dev/null; then
     echo -e "✓ Internet: OK"
 else
@@ -39,7 +35,7 @@ else
     exit 1
 fi
 
-# 2. Thu thập thông tin từ người dùng
+# 2. Nhập thông tin
 echo -e "\nChọn giao thức\n"
 echo " 1. IMAP (Khuyến nghị)"
 echo " 2. POP3"
@@ -72,60 +68,63 @@ while [[ ! "$USER_EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]];
     fi
 done
 
-# 3. Tạo Profile và ghi cấu hình user.js
 echo -e "\nĐang cấu hình..."
 
-PROFILE_DIR="$HOME/.thunderbird/auto.profile"
+# 3. Xác định đúng thư mục root của Thunderbird
+TB_BASE="$HOME/.thunderbird"
+if [ -d "$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird" ]; then
+    TB_BASE="$HOME/.var/app/org.mozilla.Thunderbird/.thunderbird"
+fi
+
+PROFILE_DIR="$TB_BASE/auto.profile"
 mkdir -p "$PROFILE_DIR"
 
+# 4. Ghi file user.js chuẩn
 cat <<EOF > "$PROFILE_DIR/user.js"
-// Account Management
-user_pref("mail.account.account1.server", "server1");
 user_pref("mail.account.account1.identities", "id1");
+user_pref("mail.account.account1.server", "server1");
 user_pref("mail.accountmanager.accounts", "account1");
 user_pref("mail.accountmanager.defaultaccount", "account1");
-
-// Incoming Server (IMAP/POP3) - BizFly Cloud
-user_pref("mail.server.server1.type", "$SERVER_TYPE");
-user_pref("mail.server.server1.hostname", "$IN_HOST");
-user_pref("mail.server.server1.userlogintypes", 0);
-user_pref("mail.server.server1.username", "$USER_EMAIL");
-user_pref("mail.server.server1.port", $IN_PORT);
-user_pref("mail.server.server1.socketType", 3);
-user_pref("mail.server.server1.authMethod", 3);
-
-// Identity Config
-user_pref("mail.identity.id1.useremail", "$USER_EMAIL");
 user_pref("mail.identity.id1.fullName", "$FULL_NAME");
+user_pref("mail.identity.id1.useremail", "$USER_EMAIL");
 user_pref("mail.identity.id1.valid", true);
 user_pref("mail.identity.id1.smtpServer", "smtp1");
-
-// Outgoing Server (SMTP) - BizFly Cloud
+user_pref("mail.server.server1.authMethod", 3);
+user_pref("mail.server.server1.hostname", "$IN_HOST");
+user_pref("mail.server.server1.name", "$USER_EMAIL");
+user_pref("mail.server.server1.port", $IN_PORT);
+user_pref("mail.server.server1.socketType", 3);
+user_pref("mail.server.server1.type", "$SERVER_TYPE");
+user_pref("mail.server.server1.userName", "$USER_EMAIL");
 user_pref("mail.smtp.defaultserver", "smtp1");
+user_pref("mail.smtpserver.smtp1.authMethod", 3);
 user_pref("mail.smtpserver.smtp1.hostname", "mail.bizflycloud.vn");
 user_pref("mail.smtpserver.smtp1.port", 465);
-user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
-user_pref("mail.smtpserver.smtp1.authMethod", 3);
 user_pref("mail.smtpserver.smtp1.try_ssl", 3);
+user_pref("mail.smtpserver.smtp1.username", "$USER_EMAIL");
 user_pref("mail.smtpservers", "smtp1");
 EOF
 
-# Ghi file profiles.ini
-cat <<EOF > "$HOME/.thunderbird/profiles.ini"
-[General]
-StartWithLastProfile=1
-
+# 5. Ghi file profiles.ini
+cat <<EOF > "$TB_BASE/profiles.ini"
 [Profile0]
 Name=default
 IsRelative=1
 Path=auto.profile
 Default=1
+
+[General]
+StartWithLastProfile=1
+Version=2
 EOF
+
+# Xóa bớt cache profile cũ nếu có
+rm -rf "$TB_BASE/installs.ini"
 
 sleep 1
 echo -e "\n✓ Hoàn tất."
 
-# 4. Mở Thunderbird
+# 6. Khởi động Thunderbird
 echo ""
 read -p "Nhấn Enter để mở Thunderbird..."
 nohup thunderbird > /dev/null 2>&1 &
