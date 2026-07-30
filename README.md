@@ -16,14 +16,6 @@
 - ✅ Hỗ trợ cả Snap và Native version
 
 ## 🚀 Cài đặt
-
-### Cách 1: Clone repository
-
 ```bash
-git clone https://github.com/yourusername/thunderbird-bizfly-installer.git
-cd thunderbird-bizfly-installer
-chmod +x install.sh
-./install.sh# Cau hinh Thubderbird tu dong
-```` Bash
-curl -sSL https://raw.githubusercontent.com/longnguyen2026/thunderbird/main/install.sh | bash
+bash <(curl -s https://raw.githubusercontent.com/yourusername/thunderbird-bizfly-installer/main/install.sh)
 ````
