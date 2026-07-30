@@ -17,5 +17,5 @@
 
 ## 🚀 Cài đặt
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/yourusername/thunderbird-bizfly-installer/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/longnguyen2026/thunderbird/main/install.sh)
 ````
